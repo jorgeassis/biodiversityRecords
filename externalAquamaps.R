@@ -38,3 +38,4 @@ dbListTables(db)
 temp <- dbReadTable(db,"nativemaps")
 head(temp)
 
+# Lon Lat Columns 

@@ -72,6 +72,8 @@ colnames(ExternalDataObis) ; colnames(ExternalDataGbif)
 ExternalData <- mySmartBind(ExternalDataObis,ExternalDataGbif)
 colnames(ExternalData)
 
+# Lon Lat Columns 
+
 # Save dataset
 write.table(ExternalData,file=paste0(directory,"/occurrenceRecordsDB.csv"), row.names = FALSE, quote=FALSE,sep = ";",col.names = TRUE)
 
