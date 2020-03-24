@@ -38,4 +38,19 @@ dbListTables(db)
 temp <- dbReadTable(db,"nativemaps")
 head(temp)
 
+
+for( i in 1:ncol(ExternalData)) {
+  
+  ExternalData[,i] <- gsub(";", ":", ExternalData[,i])
+  
+}
+
 # Lon Lat Columns 
+
+colnames(ExternalData)[which(grepl("Longitude",colnames(ExternalData)))] <- "Lon"
+colnames(ExternalData)[which(grepl("Latitude",colnames(ExternalData)))] <- "Lat"
+colnames(ExternalData)
+
+# Save dataset
+write.table(ExternalData,file=paste0(directory,"/occurrenceRecordsDB.csv"), row.names = FALSE, quote=FALSE,sep = ";",col.names = TRUE)
+

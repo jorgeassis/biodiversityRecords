@@ -39,7 +39,7 @@ packages.to.use <- c(  "ecospat",
                        , "maptools"
                        , "rgl"
                        , "monmlp"
-                       # , "rJava"
+                       , "gtools"
                        , "gstat")
 
 packages.to.use <- unique(packages.to.use)
