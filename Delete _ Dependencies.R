@@ -2672,100 +2672,9 @@ getExternalDataObis <- function(taxa) {
 
 # ---------------------------------------------------------------------------------------------------------------
 
-getExternalDataGbif <- function(taxa) {
-  
-  if( missing(taxa)) { errormessage("no taxa (Worms name) introduced.") }
-  
-  library(rgbif)
-  
-  nRecords <- gbif(strsplit(as.character(taxa.i), " ")[[1]][1], strsplit(as.character(taxa.i), " ")[[1]][2], geo=T, removeZeros=T , download=FALSE )
-  
-  if( nRecords > 300 ) {
-    
-    seqListing <- seq(0,nRecords,by =300)
-    if(max(seqListing) < nRecords) { seqListing <- c(seqListing,nRecords) }
-    parallelChunks <- data.frame(from = seqListing[-length(seqListing)], to = c(seqListing[-c(1,length(seqListing))] -1 , nRecords ) )
-    
-    my_occs_gbif <- data.frame()
-    
-    for(ch in 1:nrow(parallelChunks)) { 
-      
-      tmpfile <- paste(tempfile(), ".json", sep = "")
-      download.file(paste0("http://api.gbif.org/v1/occurrence/search?scientificname=",strsplit(as.character(taxa.i), " ")[[1]][1],"+",strsplit(as.character(taxa.i), " ")[[1]][2],"&offset=",parallelChunks[ch,1],"&limit=300"), tmpfile, quiet = TRUE, method="curl") 
-      json <- scan(tmpfile, what = "character", quiet = TRUE, sep = "\n", encoding = "UTF-8")
-      json <- chartr("\a\v", "  ", json)
-      x <- jsonlite::fromJSON(json)
-      r <- x$results
-      r <- r[, !sapply(r, class) %in% c("data.frame", "list")]
-      rownames(r) <- NULL
-      my_occs_gbif <- smartbind(my_occs_gbif,r)
-      
-    }
-    
-    if (length(my_occs_gbif) == 0) {
-      my_occs_gbif <- data.frame()
-    }
-    if (length(my_occs_gbif) == 1) {
-      my_occs_gbif <- my_occs_gbif[[1]]
-    }
-    
-  }
-  
-  if( nRecords <= 300 ) {
-    
-    tmpfile <- paste(tempfile(), ".json", sep = "")
-    test <- try(download.file(paste0("http://api.gbif.org/v1/occurrence/search?scientificname=",strsplit(as.character(taxa.i), " ")[[1]][1],"+",strsplit(as.character(taxa.i), " ")[[1]][2],"&offset=",0,"&limit=300"), tmpfile, quiet = TRUE))
-    
-    json <- scan(tmpfile, what = "character", quiet = TRUE, sep = "\n", encoding = "UTF-8")
-    json <- chartr("\a\v", "  ", json)
-    x <- jsonlite::fromJSON(json)
-    r <- x$results
-    
-    if( length(r) > 0) {
-      
-      r <- r[, !sapply(r, class) %in% c("data.frame", "list")]
-      rownames(r) <- NULL
-      my_occs_gbif <- r 
-      
-    }
-    
-  }
-  
-  if( exists("my_occs_gbif") ) { if( is.null(my_occs_gbif) ) { my_occs_gbif <- data.frame() } }
-  
-  if( ! exists("my_occs_gbif") ) { my_occs_gbif <- data.frame() }
-  
-  if( ! is.null(my_occs_gbif$decimalLatitude) & nrow(my_occs_gbif) > 0 ) {
-    
-    my_occs_gbif <- subset(my_occs_gbif, decimalLatitude !=0 & decimalLongitude !=0)
-    
-  }
-  
-  if( nrow(my_occs_gbif) > 0 ) {
-    
-    my_occs_gbif_all <- unique(my_occs_gbif$datasetKey)
-    
-    for(z in 1:length(my_occs_gbif_all) ) {
-      
-      z.Res <- gbif_citation(x=my_occs_gbif_all[z])
-      
-      my_occs_gbif[my_occs_gbif$datasetKey == my_occs_gbif_all[z] ,"accessRights"] <- ifelse(!is.null(z.Res$rights),z.Res$rights,"")
-      
-      z.Res <- z.Res$citation$citation
-      
-      my_occs_gbif[my_occs_gbif$datasetKey == my_occs_gbif_all[z],"bibliographicCitation"] <- z.Res
-      
-    }
-    
-  }
-  
-  return(my_occs_gbif)
-  
-}
-
 # ---------------------------------------------------------------------------------------------------------------
 
-mySmartBind <- function(dfr1,dfr2) {
+smartRowBind <- function(dfr1,dfr2) {
   
   common_cols <- intersect(colnames(dfr1), colnames(dfr2))
   common_cols <- rbind(
@@ -2773,5 +2682,6 @@ mySmartBind <- function(dfr1,dfr2) {
     subset(dfr2, select = common_cols)
   )
   return(common_cols)
+  
 }
 
